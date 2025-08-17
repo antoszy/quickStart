@@ -1,0 +1,149 @@
+#!/bin/bash
+
+set -e
+
+echo "Claude Code Installation Script"
+echo "==============================="
+
+# Check if running as root (not recommended)
+if [ "$EUID" -eq 0 ]; then
+    echo "Warning: Running as root is not recommended for Claude Code installation"
+    echo "Consider running as a regular user instead"
+    read -p "Continue anyway? (y/N): " -n 1 -r
+    echo
+    if [[ ! $REPLY =~ ^[Yy]$ ]]; then
+        exit 1
+    fi
+fi
+
+echo "Step 1: Checking system requirements..."
+
+# Check if Node.js is available
+if ! command -v node &> /dev/null; then
+    echo "Node.js not found. Installing Node.js..."
+    
+    # Detect package manager and install Node.js
+    if command -v apt-get &> /dev/null; then
+        echo "Using apt-get to install Node.js..."
+        sudo apt-get update
+        sudo apt-get install -y nodejs npm
+    elif command -v yum &> /dev/null; then
+        echo "Using yum to install Node.js..."
+        sudo yum update -y
+        sudo yum install -y nodejs npm
+    elif command -v dnf &> /dev/null; then
+        echo "Using dnf to install Node.js..."
+        sudo dnf update -y
+        sudo dnf install -y nodejs npm
+    elif command -v brew &> /dev/null; then
+        echo "Using Homebrew to install Node.js..."
+        brew install node
+    else
+        echo "Error: No supported package manager found (apt-get, yum, dnf, brew)"
+        echo "Please install Node.js 18+ manually from https://nodejs.org/"
+        exit 1
+    fi
+else
+    echo "Node.js found: $(node --version)"
+fi
+
+# Check Node.js version (requires 18+)
+NODE_VERSION=$(node --version | cut -d'v' -f2 | cut -d'.' -f1)
+if [ "$NODE_VERSION" -lt 18 ]; then
+    echo "Error: Node.js version $NODE_VERSION found, but Claude Code requires Node.js 18 or higher"
+    echo "Please upgrade Node.js:"
+    echo "- Visit https://nodejs.org/ for latest version"
+    echo "- Or use a Node version manager like nvm"
+    exit 1
+fi
+
+echo "✅ Node.js version $(node --version) is compatible"
+
+echo "Step 2: Checking npm availability..."
+
+# Check if npm is available
+if ! command -v npm &> /dev/null; then
+    echo "npm not found. Attempting to install npm..."
+    
+    # Try to install npm via package manager
+    if command -v apt-get &> /dev/null; then
+        sudo apt-get install -y npm || echo "npm installation via apt-get failed"
+    elif command -v yum &> /dev/null; then
+        sudo yum install -y npm || echo "npm installation via yum failed"
+    elif command -v dnf &> /dev/null; then
+        sudo dnf install -y npm || echo "npm installation via dnf failed"
+    fi
+    
+    # If still not available, try corepack
+    if ! command -v npm &> /dev/null; then
+        echo "Trying to enable npm via corepack..."
+        if command -v corepack &> /dev/null; then
+            corepack enable npm
+        else
+            echo "Error: npm not available and no alternative installation method found"
+            echo "Please install npm manually or use a Node.js installation that includes npm"
+            exit 1
+        fi
+    fi
+fi
+
+# Verify npm is working
+if ! npm --version &> /dev/null; then
+    echo "Error: npm is installed but not working correctly"
+    echo "Try running: npm doctor"
+    exit 1
+fi
+
+echo "✅ npm version $(npm --version) is available"
+
+echo "Step 3: Installing Claude Code..."
+
+# Install Claude Code globally via npm
+echo "Installing @anthropic-ai/claude-code globally..."
+if ! npm install -g @anthropic-ai/claude-code; then
+    echo "Error: Failed to install Claude Code via npm"
+    echo ""
+    echo "Troubleshooting tips:"
+    echo "1. Check if you have write permissions to global npm directory"
+    echo "2. Try: npm config get prefix"
+    echo "3. Consider using a Node version manager (nvm)"
+    echo "4. Or install without sudo using: npm config set prefix ~/.local"
+    exit 1
+fi
+
+echo "✅ Claude Code installed successfully!"
+
+echo "Step 4: Verifying installation..."
+
+# Verify Claude Code installation
+if command -v claude &> /dev/null; then
+    echo "✅ Claude Code is available in PATH"
+    echo "Version: $(claude --version 2>/dev/null || echo "Version check failed")"
+else
+    echo "⚠️  Claude command not found in PATH"
+    echo ""
+    echo "Troubleshooting:"
+    echo "1. Try restarting your terminal"
+    echo "2. Or run: source ~/.bashrc (Linux) / source ~/.zshrc (macOS)"
+    echo "3. Check npm global bin directory: npm bin -g"
+    echo "4. Ensure npm global bin is in your PATH"
+    
+    # Show PATH info
+    NPM_BIN=$(npm bin -g 2>/dev/null || echo "unknown")
+    echo "5. npm global bin directory: $NPM_BIN"
+    
+    if [ "$NPM_BIN" != "unknown" ]; then
+        echo "6. Add to PATH if needed: export PATH=\"$NPM_BIN:\$PATH\""
+    fi
+fi
+
+echo ""
+echo "Installation completed!"
+echo ""
+echo "Next steps:"
+echo "1. Open a new terminal or run: source ~/.bashrc"
+echo "2. Navigate to your project directory"
+echo "3. Run: claude"
+echo "4. Follow the authentication prompts to connect your Anthropic account"
+echo ""
+echo "For help, visit: https://docs.anthropic.com/en/docs/claude-code"
