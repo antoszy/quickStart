@@ -98,17 +98,72 @@ echo "✅ npm version $(npm --version) is available"
 
 echo "Step 3: Installing Claude Code..."
 
-# Install Claude Code globally via npm
-echo "Installing @anthropic-ai/claude-code globally..."
-if ! npm install -g @anthropic-ai/claude-code; then
-    echo "Error: Failed to install Claude Code via npm"
+# Check npm global directory permissions
+NPM_PREFIX=$(npm config get prefix)
+echo "npm global directory: $NPM_PREFIX"
+
+if [ ! -w "$NPM_PREFIX" ] && [ "$NPM_PREFIX" != "$HOME/.local" ]; then
+    echo "⚠️  Global npm directory requires elevated permissions"
     echo ""
-    echo "Troubleshooting tips:"
-    echo "1. Check if you have write permissions to global npm directory"
-    echo "2. Try: npm config get prefix"
-    echo "3. Consider using a Node version manager (nvm)"
-    echo "4. Or install without sudo using: npm config set prefix ~/.local"
-    exit 1
+    echo "Choose installation method:"
+    echo "1. Install globally with sudo (may cause permission issues later)"
+    echo "2. Install to user directory (recommended)"
+    echo "3. Exit and configure npm properly"
+    echo ""
+    read -p "Enter choice (1/2/3): " -n 1 -r
+    echo ""
+    
+    case $REPLY in
+        1)
+            echo "Installing with sudo..."
+            if ! sudo npm install -g @anthropic-ai/claude-code; then
+                echo "Error: Failed to install Claude Code with sudo"
+                exit 1
+            fi
+            ;;
+        2)
+            echo "Setting up user directory installation..."
+            mkdir -p ~/.local/bin
+            npm config set prefix ~/.local
+            
+            # Add to PATH if not already there
+            if [[ ":$PATH:" != *":$HOME/.local/bin:"* ]]; then
+                echo "Adding ~/.local/bin to PATH..."
+                echo 'export PATH="$HOME/.local/bin:$PATH"' >> ~/.bashrc
+                echo "⚠️  Please run: source ~/.bashrc or restart your terminal after installation"
+            fi
+            
+            echo "Installing to user directory..."
+            if ! npm install -g @anthropic-ai/claude-code; then
+                echo "Error: Failed to install Claude Code to user directory"
+                exit 1
+            fi
+            ;;
+        3)
+            echo "Installation cancelled. To fix npm permissions:"
+            echo "1. Use a Node version manager like nvm: https://github.com/nvm-sh/nvm"
+            echo "2. Or change npm global directory: npm config set prefix ~/.local"
+            echo "3. Or fix npm permissions: https://docs.npmjs.com/resolving-eacces-permissions-errors-when-installing-packages-globally"
+            exit 1
+            ;;
+        *)
+            echo "Invalid choice. Exiting."
+            exit 1
+            ;;
+    esac
+else
+    # Install normally if we have permissions
+    echo "Installing @anthropic-ai/claude-code globally..."
+    if ! npm install -g @anthropic-ai/claude-code; then
+        echo "Error: Failed to install Claude Code via npm"
+        echo ""
+        echo "Troubleshooting tips:"
+        echo "1. Check if you have write permissions to global npm directory"
+        echo "2. Try: npm config get prefix"
+        echo "3. Consider using a Node version manager (nvm)"
+        echo "4. Or install without sudo using: npm config set prefix ~/.local"
+        exit 1
+    fi
 fi
 
 echo "✅ Claude Code installed successfully!"
