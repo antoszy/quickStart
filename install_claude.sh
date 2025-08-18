@@ -22,32 +22,81 @@ echo "Step 1: Checking system requirements..."
 if ! command -v node &> /dev/null; then
     echo "Node.js not found. Installing Node.js..."
     
+    # Install curl if missing
+    if ! command -v curl &> /dev/null; then
+        echo "Installing curl..."
+        if command -v apt-get &> /dev/null; then
+            if [ "$EUID" -eq 0 ]; then
+                apt-get update && apt-get install -y curl
+            else
+                sudo apt-get update && sudo apt-get install -y curl
+            fi
+        elif command -v yum &> /dev/null; then
+            if [ "$EUID" -eq 0 ]; then
+                yum install -y curl
+            else
+                sudo yum install -y curl
+            fi
+        elif command -v dnf &> /dev/null; then
+            if [ "$EUID" -eq 0 ]; then
+                dnf install -y curl
+            else
+                sudo dnf install -y curl
+            fi
+        fi
+    fi
+    
     # Detect package manager and install Node.js 20+
     if command -v apt-get &> /dev/null; then
         echo "Installing Node.js 20 via NodeSource repository..."
         # Remove old Node.js versions first
-        sudo apt-get remove -y nodejs npm || true
-        sudo apt-get autoremove -y || true
-        
-        # Install Node.js 20 from NodeSource
-        curl -fsSL https://deb.nodesource.com/setup_20.x | sudo -E bash -
-        sudo apt-get install -y nodejs
+        if [ "$EUID" -eq 0 ]; then
+            apt-get remove -y nodejs npm || true
+            apt-get autoremove -y || true
+            
+            # Install Node.js 20 from NodeSource
+            curl -fsSL https://deb.nodesource.com/setup_20.x | bash -
+            apt-get install -y nodejs
+        else
+            sudo apt-get remove -y nodejs npm || true
+            sudo apt-get autoremove -y || true
+            
+            # Install Node.js 20 from NodeSource
+            curl -fsSL https://deb.nodesource.com/setup_20.x | sudo -E bash -
+            sudo apt-get install -y nodejs
+        fi
     elif command -v yum &> /dev/null; then
         echo "Installing Node.js 20 via NodeSource repository..."
         # Remove old versions
-        sudo yum remove -y nodejs npm || true
-        
-        # Install Node.js 20 from NodeSource
-        curl -fsSL https://rpm.nodesource.com/setup_20.x | sudo bash -
-        sudo yum install -y nodejs
+        if [ "$EUID" -eq 0 ]; then
+            yum remove -y nodejs npm || true
+            
+            # Install Node.js 20 from NodeSource
+            curl -fsSL https://rpm.nodesource.com/setup_20.x | bash -
+            yum install -y nodejs
+        else
+            sudo yum remove -y nodejs npm || true
+            
+            # Install Node.js 20 from NodeSource
+            curl -fsSL https://rpm.nodesource.com/setup_20.x | sudo bash -
+            sudo yum install -y nodejs
+        fi
     elif command -v dnf &> /dev/null; then
         echo "Installing Node.js 20 via NodeSource repository..."
         # Remove old versions
-        sudo dnf remove -y nodejs npm || true
-        
-        # Install Node.js 20 from NodeSource
-        curl -fsSL https://rpm.nodesource.com/setup_20.x | sudo bash -
-        sudo dnf install -y nodejs
+        if [ "$EUID" -eq 0 ]; then
+            dnf remove -y nodejs npm || true
+            
+            # Install Node.js 20 from NodeSource
+            curl -fsSL https://rpm.nodesource.com/setup_20.x | bash -
+            dnf install -y nodejs
+        else
+            sudo dnf remove -y nodejs npm || true
+            
+            # Install Node.js 20 from NodeSource
+            curl -fsSL https://rpm.nodesource.com/setup_20.x | sudo bash -
+            sudo dnf install -y nodejs
+        fi
     elif command -v brew &> /dev/null; then
         echo "Using Homebrew to install Node.js..."
         # Uninstall old version if present
@@ -72,28 +121,53 @@ if [ "$NODE_VERSION" -lt 18 ]; then
     if command -v apt-get &> /dev/null; then
         echo "Upgrading Node.js 20 via NodeSource repository..."
         # Remove old Node.js versions first
-        sudo apt-get remove -y nodejs npm || true
-        sudo apt-get autoremove -y || true
-        
-        # Install Node.js 20 from NodeSource
-        curl -fsSL https://deb.nodesource.com/setup_20.x | sudo -E bash -
-        sudo apt-get install -y nodejs
+        if [ "$EUID" -eq 0 ]; then
+            apt-get remove -y nodejs npm || true
+            apt-get autoremove -y || true
+            
+            # Install Node.js 20 from NodeSource
+            curl -fsSL https://deb.nodesource.com/setup_20.x | bash -
+            apt-get install -y nodejs
+        else
+            sudo apt-get remove -y nodejs npm || true
+            sudo apt-get autoremove -y || true
+            
+            # Install Node.js 20 from NodeSource
+            curl -fsSL https://deb.nodesource.com/setup_20.x | sudo -E bash -
+            sudo apt-get install -y nodejs
+        fi
     elif command -v yum &> /dev/null; then
         echo "Upgrading Node.js 20 via NodeSource repository..."
         # Remove old versions
-        sudo yum remove -y nodejs npm || true
-        
-        # Install Node.js 20 from NodeSource
-        curl -fsSL https://rpm.nodesource.com/setup_20.x | sudo bash -
-        sudo yum install -y nodejs
+        if [ "$EUID" -eq 0 ]; then
+            yum remove -y nodejs npm || true
+            
+            # Install Node.js 20 from NodeSource
+            curl -fsSL https://rpm.nodesource.com/setup_20.x | bash -
+            yum install -y nodejs
+        else
+            sudo yum remove -y nodejs npm || true
+            
+            # Install Node.js 20 from NodeSource
+            curl -fsSL https://rpm.nodesource.com/setup_20.x | sudo bash -
+            sudo yum install -y nodejs
+        fi
     elif command -v dnf &> /dev/null; then
         echo "Upgrading Node.js 20 via NodeSource repository..."
         # Remove old versions
-        sudo dnf remove -y nodejs npm || true
-        
-        # Install Node.js 20 from NodeSource
-        curl -fsSL https://rpm.nodesource.com/setup_20.x | sudo bash -
-        sudo dnf install -y nodejs
+        if [ "$EUID" -eq 0 ]; then
+            dnf remove -y nodejs npm || true
+            
+            # Install Node.js 20 from NodeSource
+            curl -fsSL https://rpm.nodesource.com/setup_20.x | bash -
+            dnf install -y nodejs
+        else
+            sudo dnf remove -y nodejs npm || true
+            
+            # Install Node.js 20 from NodeSource
+            curl -fsSL https://rpm.nodesource.com/setup_20.x | sudo bash -
+            sudo dnf install -y nodejs
+        fi
     elif command -v brew &> /dev/null; then
         echo "Using Homebrew to upgrade Node.js..."
         brew upgrade node || brew install node
@@ -125,11 +199,23 @@ if ! command -v npm &> /dev/null; then
     
     # Try to install npm via package manager
     if command -v apt-get &> /dev/null; then
-        sudo apt-get install -y npm || echo "npm installation via apt-get failed"
+        if [ "$EUID" -eq 0 ]; then
+            apt-get install -y npm || echo "npm installation via apt-get failed"
+        else
+            sudo apt-get install -y npm || echo "npm installation via apt-get failed"
+        fi
     elif command -v yum &> /dev/null; then
-        sudo yum install -y npm || echo "npm installation via yum failed"
+        if [ "$EUID" -eq 0 ]; then
+            yum install -y npm || echo "npm installation via yum failed"
+        else
+            sudo yum install -y npm || echo "npm installation via yum failed"
+        fi
     elif command -v dnf &> /dev/null; then
-        sudo dnf install -y npm || echo "npm installation via dnf failed"
+        if [ "$EUID" -eq 0 ]; then
+            dnf install -y npm || echo "npm installation via dnf failed"
+        else
+            sudo dnf install -y npm || echo "npm installation via dnf failed"
+        fi
     fi
     
     # If still not available, try corepack
@@ -173,10 +259,17 @@ if [ ! -w "$NPM_PREFIX" ] && [ "$NPM_PREFIX" != "$HOME/.local" ]; then
     
     case $REPLY in
         1)
-            echo "Installing with sudo..."
-            if ! sudo npm install -g @anthropic-ai/claude-code; then
-                echo "Error: Failed to install Claude Code with sudo"
-                exit 1
+            echo "Installing with elevated permissions..."
+            if [ "$EUID" -eq 0 ]; then
+                if ! npm install -g @anthropic-ai/claude-code; then
+                    echo "Error: Failed to install Claude Code"
+                    exit 1
+                fi
+            else
+                if ! sudo npm install -g @anthropic-ai/claude-code; then
+                    echo "Error: Failed to install Claude Code with sudo"
+                    exit 1
+                fi
             fi
             ;;
         2)
