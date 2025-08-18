@@ -22,21 +22,36 @@ echo "Step 1: Checking system requirements..."
 if ! command -v node &> /dev/null; then
     echo "Node.js not found. Installing Node.js..."
     
-    # Detect package manager and install Node.js
+    # Detect package manager and install Node.js 20+
     if command -v apt-get &> /dev/null; then
-        echo "Using apt-get to install Node.js..."
-        sudo apt-get update
-        sudo apt-get install -y nodejs npm
+        echo "Installing Node.js 20 via NodeSource repository..."
+        # Remove old Node.js versions first
+        sudo apt-get remove -y nodejs npm || true
+        sudo apt-get autoremove -y || true
+        
+        # Install Node.js 20 from NodeSource
+        curl -fsSL https://deb.nodesource.com/setup_20.x | sudo -E bash -
+        sudo apt-get install -y nodejs
     elif command -v yum &> /dev/null; then
-        echo "Using yum to install Node.js..."
-        sudo yum update -y
-        sudo yum install -y nodejs npm
+        echo "Installing Node.js 20 via NodeSource repository..."
+        # Remove old versions
+        sudo yum remove -y nodejs npm || true
+        
+        # Install Node.js 20 from NodeSource
+        curl -fsSL https://rpm.nodesource.com/setup_20.x | sudo bash -
+        sudo yum install -y nodejs
     elif command -v dnf &> /dev/null; then
-        echo "Using dnf to install Node.js..."
-        sudo dnf update -y
-        sudo dnf install -y nodejs npm
+        echo "Installing Node.js 20 via NodeSource repository..."
+        # Remove old versions
+        sudo dnf remove -y nodejs npm || true
+        
+        # Install Node.js 20 from NodeSource
+        curl -fsSL https://rpm.nodesource.com/setup_20.x | sudo bash -
+        sudo dnf install -y nodejs
     elif command -v brew &> /dev/null; then
         echo "Using Homebrew to install Node.js..."
+        # Uninstall old version if present
+        brew uninstall node || true
         brew install node
     else
         echo "Error: No supported package manager found (apt-get, yum, dnf, brew)"
@@ -50,11 +65,54 @@ fi
 # Check Node.js version (requires 18+)
 NODE_VERSION=$(node --version | cut -d'v' -f2 | cut -d'.' -f1)
 if [ "$NODE_VERSION" -lt 18 ]; then
-    echo "Error: Node.js version $NODE_VERSION found, but Claude Code requires Node.js 18 or higher"
-    echo "Please upgrade Node.js:"
-    echo "- Visit https://nodejs.org/ for latest version"
-    echo "- Or use a Node version manager like nvm"
-    exit 1
+    echo "Found Node.js version $NODE_VERSION, but Claude Code requires Node.js 18 or higher"
+    echo "Upgrading Node.js to version 20..."
+    
+    # Upgrade Node.js using the same logic as installation
+    if command -v apt-get &> /dev/null; then
+        echo "Upgrading Node.js 20 via NodeSource repository..."
+        # Remove old Node.js versions first
+        sudo apt-get remove -y nodejs npm || true
+        sudo apt-get autoremove -y || true
+        
+        # Install Node.js 20 from NodeSource
+        curl -fsSL https://deb.nodesource.com/setup_20.x | sudo -E bash -
+        sudo apt-get install -y nodejs
+    elif command -v yum &> /dev/null; then
+        echo "Upgrading Node.js 20 via NodeSource repository..."
+        # Remove old versions
+        sudo yum remove -y nodejs npm || true
+        
+        # Install Node.js 20 from NodeSource
+        curl -fsSL https://rpm.nodesource.com/setup_20.x | sudo bash -
+        sudo yum install -y nodejs
+    elif command -v dnf &> /dev/null; then
+        echo "Upgrading Node.js 20 via NodeSource repository..."
+        # Remove old versions
+        sudo dnf remove -y nodejs npm || true
+        
+        # Install Node.js 20 from NodeSource
+        curl -fsSL https://rpm.nodesource.com/setup_20.x | sudo bash -
+        sudo dnf install -y nodejs
+    elif command -v brew &> /dev/null; then
+        echo "Using Homebrew to upgrade Node.js..."
+        brew upgrade node || brew install node
+    else
+        echo "Error: Cannot upgrade Node.js automatically"
+        echo "Please upgrade Node.js manually:"
+        echo "- Visit https://nodejs.org/ for latest version"
+        echo "- Or use a Node version manager like nvm"
+        exit 1
+    fi
+    
+    # Verify the upgrade worked
+    NEW_NODE_VERSION=$(node --version | cut -d'v' -f2 | cut -d'.' -f1)
+    if [ "$NEW_NODE_VERSION" -lt 18 ]; then
+        echo "Error: Node.js upgrade failed. Still at version $NEW_NODE_VERSION"
+        echo "Please install Node.js 18+ manually from https://nodejs.org/"
+        exit 1
+    fi
+    echo "✅ Node.js upgraded to version $(node --version)"
 fi
 
 echo "✅ Node.js version $(node --version) is compatible"
